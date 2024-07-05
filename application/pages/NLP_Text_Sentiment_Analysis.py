@@ -1,8 +1,13 @@
+import re
+import string
+
 import streamlit as st
+from keras.src.layers import TextVectorization
 from textblob import TextBlob
 import pandas as pd
 import altair as alt
 import tensorflow as tf
+import tensorflow_datasets as tfds
 
 
 # from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
@@ -45,7 +50,67 @@ def analyze_token_sentiment(docx):
     return None
 
 
+def vectorizer_test(review):
+    return vectorize_layer(review)
+
+
+VOCAB_SIZE = 10000
+SEQUENCE_LENGTH = 250
+EMBEDDING_DIM = 300
+
+
+def standardization(input_data):
+    """
+    Input: raw reviews
+    output: standardized reviews
+    """
+    lowercase = tf.strings.lower(input_data)
+    no_tag = tf.strings.regex_replace(lowercase, "<[^>]+>", "")  # take of html tags
+    # output = tf.strings.regex_replace(no_tag, "[%s]" % re.escape(string.punctuation), "")
+
+    return no_tag
+
+
+vectorize_layer = TextVectorization(
+    standardize=standardization,
+    max_tokens=VOCAB_SIZE,
+    output_mode='int',
+    output_sequence_length=SEQUENCE_LENGTH
+)
+
+
+def vectorizer_test(review):
+    return vectorize_layer(review)
+
+
+@st.cache_resource
+def build_dict():
+    # Load the imdb reviews dataset
+    train_ds, val_ds, test_ds = tfds.load('imdb_reviews', split=['train', 'test[:50%]', 'test[50%:]'],
+                                          as_supervised=True)
+
+    # Get the training data
+    training_data = train_ds.map(lambda x, y: x)
+
+    # Adapt the vectorize_layer to the training data
+    vectorize_layer.adapt(training_data)
+
+    return vectorize_layer
+
+
 def main():
+    model = load_model()
+    # vectorize_layer = build_dict()
+
+    train_ds, val_ds, test_ds = tfds.load('imdb_reviews', split=['train', 'test[:50%]', 'test[50%:]'],
+                                          as_supervised=True)
+
+    # Get the training data
+    training_data = train_ds.map(lambda x, y: x)
+
+    # Adapt the vectorize_layer to the training data
+    vectorize_layer.adapt(training_data)
+
     # st.title("Test with your own text.")
     # st.subheader("Test with your own text.")
 
@@ -53,52 +118,89 @@ def main():
     choice = st.sidebar.selectbox("", menu)
 
     if choice == "Test with your own text.":
-        st.info("Test with your own text.")
+        st.markdown("<h3>Text Sentiment Analyzer</h3>", unsafe_allow_html=True)
+        # st.info("Test with your own text.")
         with st.form(key='nlpForm'):
-            raw_text = st.text_area("Text here👇")
+            raw_text = st.text_area("Text here👇", "Tvery good start, but movie started becoming interesting at some "
+                                                  "point and fortunately at some point it started becoming much more "
+                                                  "fun, though there was too much background noise, so in all i liked "
+                                                  "this movie", help="Test with your own text.")
             submit_button = st.form_submit_button(label='Classify Text 🔍')
 
         # layout
         col1, col2 = st.columns(2)
         if submit_button:
+            # Test model
+            test_reviews = [raw_text]
 
-            with col1:
-                st.info("Results")
-                sentiment = TextBlob(raw_text).sentiment
-                st.write(sentiment)
+            # Convert the list of test reviews to a tensor
+            test_reviews_tensor = tf.convert_to_tensor(test_reviews, dtype=tf.string)
 
-                # Emoji
+            # Vectorize the input text
+            test_reviews_vectorized = vectorizer_test(test_reviews_tensor)
 
-                if sentiment.polarity > 0:
-                    st.markdown("Sentiment:: Positive :smiley: 😊 ")
-                    st.balloons()
-                elif sentiment.polarity < 0:
-                    st.markdown("Sentiment:: Negative :angry: 😒 ")
-                    st.snow()
-                else:
-                    st.markdown("Sentiment:: Neutral 😐 ")
+            # Make predictions
+            predictions = model.predict(test_reviews_vectorized)
 
-                # Dataframe
-                result_df = convert_to_df(sentiment)
-                st.dataframe(result_df)
+            # # Display predictions
+            # for review, prediction in zip(test_reviews, predictions):
+            #     sentiment = "Positive" if prediction > 0.5 else "Negative"
+            #     st.write(f"Review: {review}\nSentiment: {sentiment}\n")
 
-                # Visualization
-                c = alt.Chart(result_df).mark_bar().encode(
-                    x='metric',
-                    y='value',
-                    color='metric')
-                st.altair_chart(c, use_container_width=True)
+            prediction = predictions[0][0]
+            st.info("Results")
 
-            with col2:
-                st.info("Token Sentiment")
+            # calculate sentiment predict percent based on prediction
 
-                token_sentiments = analyze_token_sentiment(raw_text)
-                st.write(token_sentiments)
+            # sentiment = TextBlob(raw_text).sentiment
+            # st.write(sentiment)
 
+            # Emoji
+            if prediction >= 0.5:
+                st.markdown("Sentiment:: Positive 😊 ")
+                # st.markdown(f"Confidence: {round(prediction * 100, 2)} percent.")
+                st.markdown(f"Prediction: {prediction}")
+                st.balloons()
+            else:
+                st.markdown("Sentiment:: Negative 😒 ")
+                # st.markdown(f"Confidence: {round(prediction * 100, 2)} percent.")
+                st.markdown(f"Prediction: {prediction}")
+                st.snow()
 
+            # with col1:
+            #     prediction = predictions[0][0]
+            #     st.info("Results")
+            #     sentiment = TextBlob(raw_text).sentiment
+            #     st.write(sentiment)
+            #
+            #     # Emoji
+            #
+            #     if prediction >= 0.5:
+            #         st.markdown("Sentiment:: Positive :smiley: 😊 ")
+            #         st.balloons()
+            #     else:
+            #         st.markdown("Sentiment:: Negative :angry: 😒 ")
+            #         st.snow()
+            # else:
+            #     st.markdown("Sentiment:: Neutral 😐 ")
 
-
-
+            #     # Dataframe
+            #     result_df = convert_to_df(sentiment)
+            #     st.dataframe(result_df)
+            #
+            #     # Visualization
+            #     c = alt.Chart(result_df).mark_bar().encode(
+            #         x='metric',
+            #         y='value',
+            #         color='metric')
+            #     st.altair_chart(c, use_container_width=True)
+            #
+            # with col2:
+            #     st.info("Token Sentiment")
+            #
+            #     token_sentiments = analyze_token_sentiment(raw_text)
+            #     st.write(token_sentiments)
+            #
 
 
     elif choice == "Batch file sentiment analysis.":

@@ -19,4 +19,4 @@ mypy==1.4.1
 pre-commit==3.3.3
 pytest
 textblob
-tf
+tensorflow-datasets
