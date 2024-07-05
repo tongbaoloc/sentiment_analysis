@@ -9,7 +9,7 @@ import tensorflow as tf
 
 @st.cache_resource
 def load_model():
-    return tf.keras.models.load_model('models/text_sentiment_analysis.h5')
+cd     return tf.keras.models.load_model('models/text_sentiment_analysis.h5')
 
 
 with st.spinner('Model is being loaded..'):
