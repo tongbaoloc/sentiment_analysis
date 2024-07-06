@@ -12,15 +12,17 @@ By leveraging deep learning techniques, we compare the performance of different 
 
 The project is built using TensorFlow and Keras, and it includes a Streamlit application for easy demonstration and usage.
 
-## Current Evaluation Metrics
+## Evaluation Metrics and Results (Date: 2024-07-06)
 
-| Models                     | time(seconds) | Evaluation        |              | 
-|----------------------------|---------------|-------------------|--------------|
-|                            |               | loss              | accuracy     |
-| Simple RNN                 | 21            | 0.4795            | 0.7762       |
-| <mark style="background-color: yellow;">LSTM</mark> | <mark style="background-color: yellow;">4</mark> | <mark style="background-color: yellow; color: red;">0.5294</mark> | <mark style="background-color: yellow;">0.8840</mark>   |
-| GRU                        | 4             | 0.4961            | 0.8283       |
-| Pretrained Word2Vec[Gensim]| 3             | 0.3205            | 0.8638       |
+| Models                                                                             | Time(seconds)                                    | Loss                                                              | Accuracy                                              | 
+|------------------------------------------------------------------------------------|--------------------------------------------------|-------------------------------------------------------------------|-------------------------------------------------------|
+| Simple RNN                                                                         | 21                                               | 0.4795                                                            | 0.7762                                                |
+| LSTM                                                                               | 4                                                | 0.5294                                                            | 0.8440                                                |
+| GRU                                                                                | 4                                                | 0.4961                                                            | 0.8283                                                |
+| <mark style="background-color: yellow;">LSTM + Pretrained Word2Vec[Gensim] </mark> | <mark style="background-color: yellow;">3</mark> | <mark style="background-color: yellow; color: red;">0.3205</mark> | <mark style="background-color: yellow;">0.8638</mark> |
+| BERT                                                                               | ?                                                | ?                                                                 | ?                                                     |
+
+
 
 Models comparison details can be downloaded [here](application/models/imdb/models_comparation.xlsx)
 
@@ -28,9 +30,13 @@ Models comparison details can be downloaded [here](application/models/imdb/model
 
 The Streamlit application provides an interactive interface for testing the sentiment analysis system. The application allows users to input text data and view the sentiment analysis results. The application also includes a file uploader for testing the sentiment analysis on custom text files.
 
-![Analyzer with your own text](assets/demo1.png)
+![Analyzer with your own text](assets/demo_negative_case.png)
 
-This is the negative sentiment analysis case.
+And, this is the negative sentiment analysis case.
+
+![Analyzer with your own text](assets/demo_positive_case.png)
+
+This the positive sentiment analysis case.
 
 ## Data Collection
 
