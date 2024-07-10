@@ -24,7 +24,7 @@ The project is built using TensorFlow and Keras, and it includes a Streamlit app
 
 
 
-Models comparison details can be downloaded [here](application/models/imdb/models_comparation.xlsx)
+Models comparison details can be downloaded [here](application/models/sentiment_analysic/models_comparation.xlsx)
 
 ## Demo
 
